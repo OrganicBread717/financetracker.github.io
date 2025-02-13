@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -31,6 +32,7 @@
     <form id="transaction-form">
         <input type="text" id="desc" placeholder="Description" required>
         <input type="number" id="amount" placeholder="Amount" required>
+        <input type="date" id="date" required>
         <select id="type">
             <option value="income">Income</option>
             <option value="expense">Expense</option>
@@ -45,15 +47,26 @@
                 <th>Description</th>
                 <th>Amount</th>
                 <th>Type</th>
+                <th>Date</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="transaction-list"></tbody>
     </table>
     
+    <h3>Summary</h3>
+    <p>Total Income: $<span id="total-income">0.00</span></p>
+    <p>Total Expenses: $<span id="total-expense">0.00</span></p>
+    <p>Net Total: $<span id="net-total">0.00</span></p>
+    
     <script>
         let balance = 0;
+        let totalIncome = 0;
+        let totalExpense = 0;
         const balanceEl = document.getElementById("balance");
+        const totalIncomeEl = document.getElementById("total-income");
+        const totalExpenseEl = document.getElementById("total-expense");
+        const netTotalEl = document.getElementById("net-total");
         const transactionForm = document.getElementById("transaction-form");
         const transactionList = document.getElementById("transaction-list");
 
@@ -61,6 +74,7 @@
             event.preventDefault();
             const desc = document.getElementById("desc").value;
             const amount = parseFloat(document.getElementById("amount").value);
+            const date = document.getElementById("date").value;
             const type = document.getElementById("type").value;
             
             if (isNaN(amount) || amount <= 0) {
@@ -73,20 +87,38 @@
                 <td>${desc}</td>
                 <td>${amount.toFixed(2)}</td>
                 <td>${type}</td>
+                <td>${date}</td>
                 <td><button onclick="removeTransaction(this, ${amount}, '${type}')">Delete</button></td>
             `;
             transactionList.appendChild(row);
             
             balance += type === "income" ? amount : -amount;
-            balanceEl.textContent = balance.toFixed(2);
+            if (type === "income") {
+                totalIncome += amount;
+            } else {
+                totalExpense += amount;
+            }
             
+            updateDisplay();
             transactionForm.reset();
         });
 
         function removeTransaction(button, amount, type) {
             button.parentElement.parentElement.remove();
             balance -= type === "income" ? amount : -amount;
+            if (type === "income") {
+                totalIncome -= amount;
+            } else {
+                totalExpense -= amount;
+            }
+            updateDisplay();
+        }
+
+        function updateDisplay() {
             balanceEl.textContent = balance.toFixed(2);
+            totalIncomeEl.textContent = totalIncome.toFixed(2);
+            totalExpenseEl.textContent = totalExpense.toFixed(2);
+            netTotalEl.textContent = (totalIncome - totalExpense).toFixed(2);
         }
     </script>
 </body>
