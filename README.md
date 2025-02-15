@@ -40,8 +40,9 @@
         <button type="submit">Add</button>
     </form>
     
-    <h3>Filter Transactions</h3>
-    <input type="text" id="filter-desc" placeholder="Search by description">
+    <h3>Filter Transactions by Date Range</h3>
+    <input type="date" id="start-date">
+    <input type="date" id="end-date">
     <button onclick="filterTransactions()">Filter</button>
     <button onclick="resetFilter()">Reset</button>
     
@@ -74,7 +75,10 @@
         const netTotalEl = document.getElementById("net-total");
         const transactionForm = document.getElementById("transaction-form");
         const transactionList = document.getElementById("transaction-list");
-        const filterDescInput = document.getElementById("filter-desc");
+        const startDateInput = document.getElementById("start-date");
+        const endDateInput = document.getElementById("end-date");
+
+        const transactions = [];
 
         transactionForm.addEventListener("submit", function(event) {
             event.preventDefault();
@@ -87,29 +91,38 @@
                 alert("Please enter a valid amount.");
                 return;
             }
-            
+
+            const transaction = {
+                desc,
+                amount: parseFloat(amount),
+                date,
+                type
+            };
+
+            transactions.push(transaction);
+
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${desc}</td>
                 <td>${parseFloat(amount).toFixed(2)}</td>
                 <td>${type}</td>
                 <td>${date}</td>
-                <td><button onclick="removeTransaction(this, ${amount}, '${type}')">Delete</button></td>
+                <td><button onclick="removeTransaction(this, ${amount}, '${type}', '${date}')">Delete</button></td>
             `;
             transactionList.appendChild(row);
-            
+
             balance += type === "income" ? parseFloat(amount) : -parseFloat(amount);
             if (type === "income") {
                 totalIncome += parseFloat(amount);
             } else {
                 totalExpense += parseFloat(amount);
             }
-            
+
             updateDisplay();
             transactionForm.reset();
         });
 
-        function removeTransaction(button, amount, type) {
+        function removeTransaction(button, amount, type, date) {
             button.parentElement.parentElement.remove();
             balance -= type === "income" ? parseFloat(amount) : -parseFloat(amount);
             if (type === "income") {
@@ -117,6 +130,12 @@
             } else {
                 totalExpense -= parseFloat(amount);
             }
+
+            const index = transactions.findIndex(transaction => transaction.amount === amount && transaction.date === date && transaction.type === type);
+            if (index !== -1) {
+                transactions.splice(index, 1);
+            }
+
             updateDisplay();
         }
 
@@ -128,23 +147,53 @@
         }
 
         function filterTransactions() {
-            const filterText = filterDescInput.value.toLowerCase();
-            const rows = transactionList.getElementsByTagName("tr");
-            for (let row of rows) {
-                const descCell = row.getElementsByTagName("td")[0];
-                if (descCell) {
-                    const textValue = descCell.textContent.toLowerCase();
-                    row.style.display = textValue.includes(filterText) ? "" : "none";
-                }
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            let filteredTransactions = transactions;
+
+            if (startDate || endDate) {
+                filteredTransactions = transactions.filter(transaction => {
+                    const transactionDate = new Date(transaction.date);
+                    const start = startDate ? new Date(startDate) : new Date(-8640000000000000); 
+                    const end = endDate ? new Date(endDate) : new Date(8640000000000000);
+                    return transactionDate >= start && transactionDate <= end;
+                });
             }
+
+            totalIncome = 0;
+            totalExpense = 0;
+
+            transactionList.innerHTML = '';
+
+            filteredTransactions.forEach(transaction => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${transaction.desc}</td>
+                    <td>${transaction.amount.toFixed(2)}</td>
+                    <td>${transaction.type}</td>
+                    <td>${transaction.date}</td>
+                    <td><button onclick="removeTransaction(this, ${transaction.amount}, '${transaction.type}', '${transaction.date}')">Delete</button></td>
+                `;
+                transactionList.appendChild(row);
+
+                if (transaction.type === "income") {
+                    totalIncome += transaction.amount;
+                } else {
+                    totalExpense += transaction.amount;
+                }
+            });
+
+            updateDisplay();
         }
 
         function resetFilter() {
-            filterDescInput.value = "";
+            startDateInput.value = '';
+            endDateInput.value = '';
             filterTransactions();
         }
     </script>
 </body>
 </html>
+
 
 
