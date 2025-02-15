@@ -31,7 +31,7 @@
     <h3>Add Transaction</h3>
     <form id="transaction-form">
         <input type="text" id="desc" placeholder="Description" required>
-        <input type="number" id="amount" placeholder="Amount" required>
+        <input type="number" step="0.01" min="0.01" id="amount" placeholder="Amount" required>
         <input type="date" id="date" required>
         <select id="type">
             <option value="income">Income</option>
@@ -39,6 +39,10 @@
         </select>
         <button type="submit">Add</button>
     </form>
+    
+    <h3>Filter Transactions</h3>
+    <input type="text" id="filter-desc" placeholder="Search by description">
+    <button onclick="filterTransactions()">Filter</button>
     
     <h3>Transactions</h3>
     <table>
@@ -69,11 +73,12 @@
         const netTotalEl = document.getElementById("net-total");
         const transactionForm = document.getElementById("transaction-form");
         const transactionList = document.getElementById("transaction-list");
+        const filterDescInput = document.getElementById("filter-desc");
 
         transactionForm.addEventListener("submit", function(event) {
             event.preventDefault();
             const desc = document.getElementById("desc").value;
-            const amount = parseFloat(document.getElementById("amount").value);
+            const amount = parseFloat(document.getElementById("amount").value).toFixed(2);
             const date = document.getElementById("date").value;
             const type = document.getElementById("type").value;
             
@@ -85,18 +90,18 @@
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${desc}</td>
-                <td>${amount.toFixed(2)}</td>
+                <td>${parseFloat(amount).toFixed(2)}</td>
                 <td>${type}</td>
                 <td>${date}</td>
                 <td><button onclick="removeTransaction(this, ${amount}, '${type}')">Delete</button></td>
             `;
             transactionList.appendChild(row);
             
-            balance += type === "income" ? amount : -amount;
+            balance += type === "income" ? parseFloat(amount) : -parseFloat(amount);
             if (type === "income") {
-                totalIncome += amount;
+                totalIncome += parseFloat(amount);
             } else {
-                totalExpense += amount;
+                totalExpense += parseFloat(amount);
             }
             
             updateDisplay();
@@ -105,11 +110,11 @@
 
         function removeTransaction(button, amount, type) {
             button.parentElement.parentElement.remove();
-            balance -= type === "income" ? amount : -amount;
+            balance -= type === "income" ? parseFloat(amount) : -parseFloat(amount);
             if (type === "income") {
-                totalIncome -= amount;
+                totalIncome -= parseFloat(amount);
             } else {
-                totalExpense -= amount;
+                totalExpense -= parseFloat(amount);
             }
             updateDisplay();
         }
@@ -120,6 +125,19 @@
             totalExpenseEl.textContent = totalExpense.toFixed(2);
             netTotalEl.textContent = (totalIncome - totalExpense).toFixed(2);
         }
+
+        function filterTransactions() {
+            const filterText = filterDescInput.value.toLowerCase();
+            const rows = transactionList.getElementsByTagName("tr");
+            for (let row of rows) {
+                const descCell = row.getElementsByTagName("td")[0];
+                if (descCell) {
+                    const textValue = descCell.textContent.toLowerCase();
+                    row.style.display = textValue.includes(filterText) ? "" : "none";
+                }
+            }
+        }
     </script>
 </body>
 </html>
+
