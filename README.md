@@ -43,6 +43,7 @@
     <h3>Filter Transactions</h3>
     <input type="text" id="filter-desc" placeholder="Search by description">
     <button onclick="filterTransactions()">Filter</button>
+    <button onclick="resetFilter()">Reset</button>
     
     <h3>Transactions</h3>
     <table>
@@ -137,7 +138,13 @@
                 }
             }
         }
+
+        function resetFilter() {
+            filterDescInput.value = "";
+            filterTransactions();
+        }
     </script>
 </body>
 </html>
+
 
